@@ -1,0 +1,55 @@
+plugins {
+	id 'org.springframework.boot' version '2.1.2.RELEASE'
+	id 'java'
+}
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.synopsis.ws'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+sourceSets.main.java.srcDirs "src/main/java"
+sourceSets.main.resources.excludes = ['user.xsd']
+
+repositories {
+	mavenCentral()
+}
+
+configurations {
+	jaxb
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web-services'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'wsdl4j:wsdl4j:1.6.2' 
+    jaxb  'com.sun.xml.bind:jaxb-xjc:2.2.7'    
+    jaxb  'com.sun.xml.bind:jaxb-impl:2.2.7'
+}
+
+task jaxb {
+	System.setProperty('javax.xml.accessExternalSchema', 'all')
+    def jaxbTargetDir = file("src/main/java")
+
+    doLast {
+
+        ant.taskdef(
+			name: 'xjc',
+			classname: 'com.sun.tools.xjc.XJCTask',
+			classpath: configurations.jaxb.asPath
+        )
+
+        ant.jaxbTargetDir = jaxbTargetDir
+
+        ant.xjc(
+			destdir: '${jaxbTargetDir}',
+			package: 'com.synopsis.ws.TestSoapGradle.user',
+			schema: 'src/main/resources/xsd/user.xsd'
+        )
+    }
+}
+compileJava.dependsOn jaxb
